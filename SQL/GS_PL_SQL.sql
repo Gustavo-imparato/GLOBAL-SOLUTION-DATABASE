@@ -639,58 +639,55 @@ EXCEPTION
         DBMS_OUTPUT.PUT_LINE('Ocorreu um erro: ' || SQLERRM);
 END;
 
-
--- Inserção de registros na tabela tb_evento
-INSERT INTO tb_evento (id_evento, nm_evento, dt_evento, tp_evento, descricao, link_foto, local, nr_participantes, feedback, md_feedback)
-VALUES (1, 'Evento A', TO_DATE('2024-07-15', 'YYYY-MM-DD'), 'Conferência', 'Conferência sobre tecnologia', 'http://example.com/foto1.jpg', 'Centro de Convenções, Av. Principal, 123', 200, 0, 0);
-
-INSERT INTO tb_evento (id_evento, nm_evento, dt_evento, tp_evento, descricao, link_foto, local, nr_participantes, feedback, md_feedback)
-VALUES (2, 'Evento B', TO_DATE('2024-08-20', 'YYYY-MM-DD'), 'Seminário', 'Seminário sobre sustentabilidade', 'http://example.com/foto2.jpg', 'Auditório Municipal, Rua das Flores, 456', 150, 0, 0);
-
-INSERT INTO tb_evento (id_evento, nm_evento, dt_evento, tp_evento, descricao, link_foto, local, nr_participantes, feedback, md_feedback)
-VALUES (3, 'Evento C', TO_DATE('2024-09-10', 'YYYY-MM-DD'), 'Workshop', 'Workshop de marketing digital', 'http://example.com/foto3.jpg', 'Espaço Coworking, Praça Central, 789', 100, 0, 0);
-
-
-
---INSCRICAO - BLOCO ANONIMO QUE CRUZA A TABELA INSCRICAO E EVENTO E USA A FUNCAO SUM
+--PRODUTO- BLOCO ANONIMO QUE MOSTRA OS DADOS DE PRODUTO E SUMARIZA SEUS DADOS NUMERICOS
+SET SERVEROUTPUT ON;
 DECLARE
-    CURSOR cursor_evento_inscricao IS
-        SELECT e.id_evento, e.nm_evento, e.nr_participantes, COUNT(i.id_inscricao) AS total_inscricoes
-        FROM tb_evento e, tb_inscricao i
-        WHERE e.id_evento = i.tb_evento_id_evento(+)
-        GROUP BY e.id_evento, e.nm_evento, e.nr_participantes;
+    CURSOR cursor_produto IS
+        SELECT id_produto, nm_produto, vl_produto, link, tb_fornecedor_id_fornecedor, tb_categoria_id_categoria, tb_usuario_id_usuario
+        FROM tb_produto;
 
-    v_id_evento          tb_evento.id_evento%TYPE;
-    v_nm_evento          tb_evento.nm_evento%TYPE;
-    v_nr_participantes   tb_evento.nr_participantes%TYPE;
-    v_total_inscricoes   NUMBER;
+    v_id_produto                tb_produto.id_produto%TYPE;
+    v_nm_produto                tb_produto.nm_produto%TYPE;
+    v_vl_produto                tb_produto.vl_produto%TYPE;
+    v_link                      tb_produto.link%TYPE;
+    v_tb_fornecedor_id_fornecedor tb_produto.tb_fornecedor_id_fornecedor%TYPE;
+    v_tb_categoria_id_categoria tb_produto.tb_categoria_id_categoria%TYPE;
+    v_tb_usuario_id_usuario     tb_produto.tb_usuario_id_usuario%TYPE;
+
+    v_total_vl_produto          NUMBER := 0;
+    v_media_vl_produto          NUMBER := 0;
+    v_count_produto             NUMBER := 0;
 
 BEGIN
-    OPEN cursor_evento_inscricao;
+    OPEN cursor_produto;
 
     LOOP
-        FETCH cursor_evento_inscricao INTO v_id_evento, v_nm_evento, v_nr_participantes, v_total_inscricoes;
+        FETCH cursor_produto INTO v_id_produto, v_nm_produto, v_vl_produto, v_link, v_tb_fornecedor_id_fornecedor, v_tb_categoria_id_categoria, v_tb_usuario_id_usuario;
 
-        EXIT WHEN cursor_evento_inscricao%NOTFOUND;
+        EXIT WHEN cursor_produto%NOTFOUND;
 
-        DBMS_OUTPUT.PUT_LINE('Evento: ' || v_nm_evento);
-        DBMS_OUTPUT.PUT_LINE('Número de Participantes Previstos: ' || v_nr_participantes);
-        DBMS_OUTPUT.PUT_LINE('Número Total de Inscrições: ' || v_total_inscricoes);
-
-        -- Tomada de decisão baseada no número de inscrições em relação ao número previsto de participantes
-        IF v_total_inscricoes > v_nr_participantes THEN
-            DBMS_OUTPUT.PUT_LINE('Status: Mais inscrições do que o previsto');
-        ELSIF v_total_inscricoes = v_nr_participantes THEN
-            DBMS_OUTPUT.PUT_LINE('Status: Número de inscrições igual ao previsto');
-        ELSE
-            DBMS_OUTPUT.PUT_LINE('Status: Menos inscrições do que o previsto');
-        END IF;
-
+        DBMS_OUTPUT.PUT_LINE('ID Produto: ' || v_id_produto);
+        DBMS_OUTPUT.PUT_LINE('Nome Produto: ' || v_nm_produto);
+        DBMS_OUTPUT.PUT_LINE('Valor Produto: ' || v_vl_produto);
+        DBMS_OUTPUT.PUT_LINE('Link: ' || v_link);
+        DBMS_OUTPUT.PUT_LINE('ID Fornecedor: ' || v_tb_fornecedor_id_fornecedor);
+        DBMS_OUTPUT.PUT_LINE('ID Categoria: ' || v_tb_categoria_id_categoria);
+        DBMS_OUTPUT.PUT_LINE('ID Usuário: ' || v_tb_usuario_id_usuario);
         DBMS_OUTPUT.PUT_LINE('-------------------------');
+
+        v_total_vl_produto := v_total_vl_produto + v_vl_produto;
+        v_count_produto := v_count_produto + 1;
     END LOOP;
 
-    -- Fechando o cursor
-    CLOSE cursor_evento_inscricao;
+    IF v_count_produto > 0 THEN
+        v_media_vl_produto := v_total_vl_produto / v_count_produto;
+    END IF;
+
+    DBMS_OUTPUT.PUT_LINE('Total de Produtos: ' || v_count_produto);
+    DBMS_OUTPUT.PUT_LINE('Total Valor dos Produtos: ' || v_total_vl_produto);
+    DBMS_OUTPUT.PUT_LINE('Média Valor dos Produtos: ' || v_media_vl_produto);
+
+    CLOSE cursor_produto;
 EXCEPTION
     WHEN OTHERS THEN
         DBMS_OUTPUT.PUT_LINE('Ocorreu um erro: ' || SQLERRM);
